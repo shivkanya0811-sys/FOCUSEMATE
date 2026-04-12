@@ -1,0 +1,3 @@
+"""
+FocuseMate Backend Application
+"""

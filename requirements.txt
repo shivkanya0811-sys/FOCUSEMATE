@@ -1,0 +1,18 @@
+# FocuseMate Backend - Requirements
+# Compatible with Python 3.10, 3.11, 3.12, 3.13
+
+fastapi>=0.104.0,<1.0.0
+uvicorn[standard]>=0.24.0,<1.0.0
+sqlalchemy[asyncio]>=2.0.23,<3.0.0
+asyncpg>=0.29.0,<1.0.0
+alembic>=1.13.0,<2.0.0
+pydantic>=2.5.0,<3.0.0
+pydantic-settings>=2.1.0,<3.0.0
+python-jose[cryptography]>=3.3.0,<4.0.0
+passlib[bcrypt]>=1.7.4,<2.0.0
+bcrypt>=4.0.1,<5.0.0
+python-multipart>=0.0.6,<1.0.0
+websockets>=12.0,<14.0
+httpx>=0.25.0,<1.0.0
+python-dotenv>=1.0.0,<2.0.0
+email-validator>=2.1.0,<3.0.0

@@ -1,0 +1,3 @@
+"""
+FocuseMate – Schemas package
+"""

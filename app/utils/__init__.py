@@ -1,0 +1,3 @@
+"""
+FocuseMate – Utils package
+"""
