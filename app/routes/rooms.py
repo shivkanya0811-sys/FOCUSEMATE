@@ -26,6 +26,8 @@ from app.services.room_service import (
     leave_room,
     list_all_rooms,
     list_user_rooms,
+    start_room_meeting,
+    stop_room_meeting,
     update_room,
 )
 
@@ -138,7 +140,8 @@ async def update_existing_room(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
 
     updated = await update_room(
-        db, room,
+        db,
+        room,
         title=body.title,
         description=body.description,
         tags=body.tags,
@@ -210,7 +213,54 @@ async def leave_existing_room(
     return {"message": "Left room successfully"}
 
 
-# ── Meeting link generation ──────────────────────────────────────
+@router.post("/{room_id}/meeting", status_code=status.HTTP_200_OK)
+async def start_meeting_for_room(
+    room_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Start an in-app WebRTC meeting for a room."""
+    room = await get_room_by_id(db, room_id)
+    if not room:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Room not found")
+
+    role = await get_user_role_in_room(db, room_id, current_user.id)
+    if not role:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Join the room first")
+
+    room = await start_room_meeting(db, room)
+    return {
+        "room_id": room.id,
+        "is_live": room.is_live,
+        "meeting_link": room.meeting_link,
+        "message": "Meeting started",
+    }
+
+
+@router.delete("/{room_id}/meeting", status_code=status.HTTP_200_OK)
+async def stop_meeting_for_room(
+    room_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Stop an in-app WebRTC meeting for a room."""
+    room = await get_room_by_id(db, room_id)
+    if not room:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Room not found")
+
+    role = await get_user_role_in_room(db, room_id, current_user.id)
+    if role not in ("owner", "admin"):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only owner/admin can stop the meeting")
+
+    room = await stop_room_meeting(db, room)
+    return {
+        "room_id": room.id,
+        "is_live": room.is_live,
+        "message": "Meeting stopped",
+    }
+
+
+# Optional: keep your old generic meeting creation route
 @router.post("/meetings/create", response_model=MeetingOut)
 async def create_meeting(
     body: MeetingCreate,
@@ -219,6 +269,10 @@ async def create_meeting(
 ):
     """Generate a unique meeting link."""
     result = await create_meeting_link(
-        db, current_user, room_id=body.room_id, title=body.title
+        db,
+        current_user,
+        room_id=body.room_id,
+        title=body.title,
     )
     return MeetingOut(**result)
+

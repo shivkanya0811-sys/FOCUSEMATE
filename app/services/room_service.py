@@ -28,12 +28,12 @@ async def create_room(
         tags=tags,
         owner_id=owner.id,
         max_members=max_members,
-        meeting_link=f"https://focusmate.app/meet/{uuid.uuid4().hex[:12]}",
+        meeting_link=None,
+        is_live=False,
     )
     db.add(room)
     await db.flush()
 
-    # Owner automatically becomes a member with OWNER role
     membership = RoomMember(
         room_id=room.id,
         user_id=owner.id,
@@ -80,8 +80,6 @@ async def delete_room(db: AsyncSession, room: Room) -> None:
 
 
 async def join_room(db: AsyncSession, room: Room, user: User) -> RoomMember:
-    """Add a user to a room as a member. Raises ValueError if already joined or room is full."""
-    # Check existing membership
     result = await db.execute(
         select(RoomMember).where(
             RoomMember.room_id == room.id,
@@ -92,7 +90,6 @@ async def join_room(db: AsyncSession, room: Room, user: User) -> RoomMember:
     if existing:
         raise ValueError("Already a member of this room")
 
-    # Check capacity
     count_result = await db.execute(
         select(func.count(RoomMember.id)).where(RoomMember.room_id == room.id)
     )
@@ -134,8 +131,6 @@ async def list_user_rooms(
     limit: int = 50,
     offset: int = 0,
 ) -> tuple[list[dict], int]:
-    """Return rooms the user has joined, with member counts."""
-    # Get rooms the user is a member of
     member_subq = (
         select(RoomMember.room_id)
         .where(RoomMember.user_id == user_id)
@@ -191,7 +186,6 @@ async def list_all_rooms(
     limit: int = 50,
     offset: int = 0,
 ) -> tuple[list[dict], int]:
-    """List all rooms with optional search and tag filter."""
     count_subq = (
         select(
             RoomMember.room_id,
@@ -326,15 +320,30 @@ async def get_user_role_in_room(
     return role
 
 
+async def start_room_meeting(db: AsyncSession, room: Room) -> Room:
+    room.is_live = True
+    room.meeting_link = f"webrtc://room/{room.id}"
+    await db.commit()
+    await db.refresh(room)
+    return room
+
+
+async def stop_room_meeting(db: AsyncSession, room: Room) -> Room:
+    room.is_live = False
+    room.meeting_link = None
+    await db.commit()
+    await db.refresh(room)
+    return room
+
+
 async def create_meeting_link(
     db: AsyncSession,
     user: User,
     room_id: Optional[int] = None,
     title: Optional[str] = None,
 ) -> dict:
-    """Generate a unique meeting link, optionally tied to a room."""
     meeting_id = uuid.uuid4().hex[:12]
-    meeting_link = f"https://focusmate.app/meet/{meeting_id}"
+    meeting_link = f"https://meet.jit.si/focusmate-{meeting_id}"
 
     if room_id:
         room = await get_room_by_id(db, room_id)
@@ -347,3 +356,4 @@ async def create_meeting_link(
         "meeting_link": meeting_link,
         "title": title,
     }
+
