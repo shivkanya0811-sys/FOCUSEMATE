@@ -321,6 +321,7 @@ async def get_user_role_in_room(
 
 
 async def start_room_meeting(db: AsyncSession, room: Room) -> Room:
+    meeting_id = uuid.uuid4().hex[:12]
     room.is_live = True
     room.meeting_link = f"https://meet.jit.si/focusmate-{meeting_id}"
     await db.commit()
