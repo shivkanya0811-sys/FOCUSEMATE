@@ -322,7 +322,7 @@ async def get_user_role_in_room(
 
 async def start_room_meeting(db: AsyncSession, room: Room) -> Room:
     room.is_live = True
-    room.meeting_link = f"webrtc://room/{room.id}"
+    room.meeting_link = f"https://meet.jit.si/focusmate-{meeting_id}"
     await db.commit()
     await db.refresh(room)
     return room
