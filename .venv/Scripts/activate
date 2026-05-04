@@ -38,7 +38,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="C:\Formula_1\focusemate-backend\.venv"
+VIRTUAL_ENV="C:\Users\HP\Downloads\focusemate-backend\focusemate-backend\.venv"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"
