@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     # ── Database ─────────────────────────────────────────────────
-    DATABASE_URL: str = "postgresql+asyncpg://mydatabase_cpj0_user:suPpDNHiKk5i9LHVJW3whDHFFhM5hUTG@dpg-d77vqa6uk2gs73b195tg-a.oregon-postgres.render.com/mydatabase_cpj0"
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/focusemate"
     DATABASE_ECHO: bool = False
 
     # ── CORS ─────────────────────────────────────────────────────

@@ -3,7 +3,6 @@ FocuseMate – Auth Routes
 """
 from __future__ import annotations
 
-import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from jose import JWTError
@@ -24,7 +23,6 @@ from app.services.auth_service import (
     register_user,
 )
 
-logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
@@ -32,15 +30,9 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
     """Register a new user account."""
     try:
-        logger.info(f"Registration attempt: email={body.email}")
         user = await register_user(db, body.name, body.email, body.password)
-        logger.info(f"✅ Registration successful: user_id={user.id}, email={body.email}")
     except ValueError as e:
-        logger.warning(f"❌ Registration validation error: {str(e)}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    except Exception as e:
-        logger.error(f"❌ Registration error: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Registration failed: " + str(e))
     return UserBrief.model_validate(user)
 
 

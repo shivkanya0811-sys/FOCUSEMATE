@@ -10,11 +10,13 @@ import logging
 import time
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request, WebSocket, Query
+from fastapi import FastAPI, Request, WebSocket, Depends, Query, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.dependencies import get_db
 from app.core.security import decode_token_safe
 from app.db.session import close_db, init_db
 
@@ -68,7 +70,7 @@ app = FastAPI(
 # ── CORS ─────────────────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.cors_origins_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -110,6 +112,7 @@ async def rate_limiter(request: Request, call_next):
     if client_ip not in _rate_limit_store:
         _rate_limit_store[client_ip] = []
 
+    # Prune old entries
     _rate_limit_store[client_ip] = [
         t for t in _rate_limit_store[client_ip] if now - t < window
     ]
@@ -155,10 +158,10 @@ async def websocket_endpoint(
     - webrtc_offer: {type, target_user_id, sdp}
     - webrtc_answer: {type, target_user_id, sdp}
     - webrtc_ice: {type, target_user_id, candidate}
-    - join_webrtc: {type}
     - typing: {type, is_typing}
     - ping: {type}
     """
+    # Authenticate via query parameter token
     if not token:
         await websocket.close(code=4001, reason="Missing authentication token")
         return
@@ -170,8 +173,8 @@ async def websocket_endpoint(
 
     user_id = int(payload["sub"])
 
+    # Get a database session for this WebSocket connection
     from app.db.session import async_session_factory as ws_session_factory
-
     async with ws_session_factory() as db:
         try:
             await handle_websocket(websocket, room_id, user_id, db)
@@ -196,4 +199,3 @@ async def root():
         "version": settings.APP_VERSION,
         "docs": "/docs",
     }
-
