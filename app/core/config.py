@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     # ── Database ─────────────────────────────────────────────────
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:easy04@localhost:5432/mydatabase"
+    DATABASE_URL: str | None = None
     DATABASE_ECHO: bool = False
 
     # ── CORS ─────────────────────────────────────────────────────
