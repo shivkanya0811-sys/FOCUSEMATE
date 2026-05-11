@@ -1,19 +1,22 @@
+import os
 import psycopg2
+from dotenv import load_dotenv
 
-conn = psycopg2.connect(
-    "postgresql://mydatabase_cpj0_user:suPpDNHiKk5i9LHVJW3whDHFFhM5hUTG@dpg-d77vqa6uk2gs73b195tg-a.oregon-postgres.render.com/mydatabase_cpj0"
-)
+load_dotenv()
+
+conn = psycopg2.connect(os.getenv("DATABASE_URL"))
 
 cur = conn.cursor()
 
-# 🔥 ALL TABLES DELETE (clean reset)
+
 cur.execute("""
 DROP SCHEMA public CASCADE;
 CREATE SCHEMA public;
 """)
 
 conn.commit()
+
 cur.close()
 conn.close()
 
-print("✅ FULL DATABASE RESET DONE")
+print("Database Reset Successful")
